@@ -12,6 +12,15 @@
 # A PROTOTYPE FOR REPRODUCIBLE, ACCESSIBLE & SHAREABLE SCIENTIFIC OUTPUTS IN R
 
 
+
+
+# name a specific sha for an state of the modules repo, for tagged
+# versions of zoon, or 'master' for non-tagged versions
+# .sha <- 'b1544fbadaa21c41b4b51922ae73e44923b890ed'
+.sha <- 'master'
+
+
+
 #'Zoon: A package for comparing multple SDM models, good model diagnostics
 #'      and better reproducibility
 #'@name zoon
@@ -71,8 +80,6 @@ workflow <- function(occurrence, covariate, process, model, output, forceReprodu
   call <- SortArgs(PasteAndDep(occSub), PasteAndDep(covSub), PasteAndDep(proSub), 
             PasteAndDep(modSub), PasteAndDep(outSub), forceReproducible)
  
-
-
   # save the local environment as it needs to be passed to various functions.
   e <- environment() 
 
@@ -82,6 +89,13 @@ workflow <- function(occurrence, covariate, process, model, output, forceReprodu
   process.module <- CheckModList(proSub)
   model.module <- CheckModList(modSub)
   output.module <- CheckModList(outSub)
+  
+  # create a list of these things to return
+  call.list <- list(occurrence.module,
+                    covariate.module,
+                    process.module,
+                    model.module,
+                    output.module)
   
   # Only one of occurrence, covariate, process and model can be a list of 
   #   multiple modules. But ignore chained modules.
@@ -130,8 +144,7 @@ workflow <- function(occurrence, covariate, process, model, output, forceReprodu
     #return(occurrence.output)
   },  
     error = function(cond){
-      t <- ErrorAndSave(cond, 1, e)
-      return(w)
+      ErrorAndSave(cond, 1, e)
     }
   )
 
@@ -205,7 +218,8 @@ workflow <- function(occurrence, covariate, process, model, output, forceReprodu
               process.output = process.output,
               model.output = model.output,
               report = output.output,
-              call = call)
+              call = call,
+              call.list = call.list)
 
   class(output) <- 'zoonWorkflow'
   

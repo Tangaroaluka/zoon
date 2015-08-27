@@ -1,6 +1,9 @@
 
 context('Test whole workflows.')
 
+expected_names <- c('occurrence.output', 'covariate.output', 'process.output', 
+      'model.output', 'report', 'call', 'call.list') 
+
 test_that('simple, package data workflow works.', {
 
   work1 <- workflow(occurrence = UKAnophelesPlumbeus,
@@ -10,9 +13,8 @@ test_that('simple, package data workflow works.', {
                  output = SameTimePlaceMap)
 
   expect_true(exists('work1'))
-  expect_equal(names(work1), 
-    c('occurrence.output', 'covariate.output', 'process.output', 
-      'model.output', 'report', 'call'))
+  expect_equal(names(work1), expected_names) 
+    
   expect_equal(dim(work1$occurrence.output[[1]]), c(188,5))
   expect_is(work1$covariate.output[[1]], 'RasterLayer')
   expect_equal(dim(work1$covariate.output[[1]]), c(9,9,1))
@@ -35,9 +37,7 @@ test_that('Check basic quoted workflow.', {
                  output = 'SameTimePlaceMap')
 
   expect_true(exists('work1'))
-  expect_equal(names(work1), 
-    c('occurrence.output', 'covariate.output', 'process.output', 
-      'model.output', 'report', 'call'))
+  expect_equal(names(work1), expected_names) 
   expect_equal(dim(work1$occurrence.output[[1]]), c(188,5))
   expect_is(work1$covariate.output[[1]], 'RasterLayer')
   expect_equal(dim(work1$covariate.output[[1]]), c(9,9,1))
@@ -55,16 +55,15 @@ test_that('Check basic quoted workflow.', {
 
 test_that('modules downloading data work', {
 
-  work2 <- workflow(occurrence = SpOcc(species = 'Anopheles plumbeus', extent = c(-20, 20, 45, 65)),
+  work2 <- workflow(occurrence = SpOcc(species = 'Anopheles plumbeus',
+                                       extent = c(-10, 10, 45, 65)),
                     covariate = UKAir,
                     process = OneHundredBackground,
                     model = RandomForest, 
                     output = SameTimePlaceMap)
   
   expect_true(exists('work2'))
-  expect_equal(names(work2), 
-    c('occurrence.output', 'covariate.output', 'process.output', 
-      'model.output', 'report', 'call'))
+  expect_equal(names(work2), expected_names) 
   expect_is(work2$occurrence.output[[1]], 'data.frame')
   expect_equal(names(work2$occurrence.output[[1]]), c('longitude', 'latitude', 'value', 'type', 'fold'))
   expect_true(all(work2$occurrence.output[[1]][,'longitude'] < 20))
@@ -85,7 +84,7 @@ test_that('Workflows with lists of modules work.', {
   # In fact I don't think the would pass cran.
   workOccurList <- workflow(occurrence = list(UKAnophelesPlumbeus, 
                         SpOcc(species = 'Anopheles plumbeus', 
-                          extent = c(-20, 20, 45, 65))),
+                          extent = c(-10, 10, 45, 65))),
                         covariate = UKAir,
                         process = OneHundredBackground,
                         model = LogisticRegression,
@@ -116,11 +115,11 @@ test_that('Workflows with lists of modules work.', {
                      model = LogisticRegression,
                      output = list(SameTimePlaceMap, SameTimePlaceMap))
 
-  expect_equivalent(sapply(workOccurList, length), c(2, 1, 2, 2, 2, 1))
-  expect_equivalent(sapply(workCovarList, length), c(1, 2, 2, 2, 2, 1))
-  expect_equivalent(sapply(workProcessList, length), c(1, 1, 2, 2, 2, 1))
-  expect_equivalent(sapply(workModelList, length), c(1, 1, 1, 2, 2, 1))
-  expect_equivalent(sapply(workOutputList, length), c(1, 1, 1, 1, 2, 1))
+  expect_equivalent(sapply(workOccurList, length), c(2, 1, 2, 2, 2, 1, 5))
+  expect_equivalent(sapply(workCovarList, length), c(1, 2, 2, 2, 2, 1, 5))
+  expect_equivalent(sapply(workProcessList, length), c(1, 1, 2, 2, 2, 1, 5))
+  expect_equivalent(sapply(workModelList, length), c(1, 1, 1, 2, 2, 1, 5))
+  expect_equivalent(sapply(workOutputList, length), c(1, 1, 1, 1, 2, 1, 5))
 
   occurClasses <- unlist(lapply(workOccurList, function(x) sapply(x, class)))
   covarClasses <- unlist(lapply(workCovarList, function(x) sapply(x, class)))
@@ -129,15 +128,20 @@ test_that('Workflows with lists of modules work.', {
   outputClasses <- unlist(lapply(workOutputList, function(x) sapply(x, class)))
 
   expect_equivalent(occurClasses, c('data.frame','data.frame','RasterLayer','list',
-    'list','list','list','RasterLayer','RasterLayer', 'character'))
+    'list','list','list','RasterLayer','RasterLayer', 'character',
+    'list','list','list','list','list'))
   expect_equivalent(covarClasses, c('data.frame','RasterLayer','RasterLayer','list',
-    'list','list','list','RasterLayer','RasterLayer', 'character'))
+    'list','list','list','RasterLayer','RasterLayer', 'character',
+    'list','list','list','list','list'))
   expect_equivalent(processClasses, c('data.frame','RasterLayer','list',
-    'list','list','list','RasterLayer','RasterLayer', 'character'))
+    'list','list','list','RasterLayer','RasterLayer', 'character',
+    'list','list','list','list','list'))
   expect_equivalent(modelClasses, c('data.frame','RasterLayer','list',
-    'list','list','RasterLayer','RasterLayer', 'character'))
+    'list','list','RasterLayer','RasterLayer', 'character',
+    'list','list','list','list','list'))
   expect_equivalent(outputClasses, c('data.frame','RasterLayer','list',
-    'list','RasterLayer','RasterLayer', 'character'))
+    'list','RasterLayer','RasterLayer', 'character',
+    'list','list','list','list','list'))
 
 })
 
@@ -184,8 +188,7 @@ test_that('simple, crossvalidation workflow works.', {
                  output = SameTimePlaceMap)
 
   expect_true(exists('workCross'))
-  expect_equal(names(workCross), c('occurrence.output', 'covariate.output',
-    'process.output', 'model.output', 'report', 'call'))
+  expect_equal(names(workCross), expected_names)
   expect_equal(dim(workCross$occurrence.output[[1]]), c(188, 5))
   expect_is(workCross$covariate.output[[1]], 'RasterLayer')
   expect_equal(dim(workCross$covariate.output[[1]]), c(9,9,1))
@@ -263,9 +266,7 @@ test_that('workflow with mix of syntax works.', {
                  output = Chain('SameTimePlaceMap', 'SameTimePlaceMap'))
 
   expect_true(exists('workSyn'))
-  expect_equal(names(workSyn), 
-    c('occurrence.output', 'covariate.output', 'process.output', 
-      'model.output', 'report', 'call'))
+  expect_equal(names(workSyn), expected_names) 
   expect_equal(dim(workSyn$occurrence.output[[1]]), c(188,5))
   expect_is(workSyn$covariate.output[[1]], 'RasterLayer')
   expect_equal(dim(workSyn$covariate.output[[1]]), c(9,9,1))

@@ -3,7 +3,10 @@
 #' Takes a workflow object and reruns it with changes. 
 #'
 #'@param workflow A zoonWorkflow object from a previous zoon analysis
-#'
+#'@param occurrence,covariate,process,model,output Optional modules (or lists or Chains) to
+#'  replace the modules in \code{workflow}
+#'@param forceReproducible Optional logical. Whether to force zoon to collect modules
+#'  from the online repo in the new workflow. This ensure the analysis is reproducible.
 #'@return A list with the results of each module and a copy of the
 #'  call used to execute the workflow (
 #'
@@ -88,6 +91,13 @@ ChangeWorkflow <- function(workflow, occurrence = NULL, covariate = NULL, proces
   process.module <- CheckModList(proNew)
   model.module <- CheckModList(modNew)
   output.module <- CheckModList(outNew)
+  
+  # create a list of these things to return
+  call.list <- list(occurrence.module,
+                    covariate.module,
+                    process.module,
+                    model.module,
+                    output.module)
   
   # Only one of occurrence, covariate, process and model can be a list of 
   #   multiple modules.
@@ -225,7 +235,8 @@ ChangeWorkflow <- function(workflow, occurrence = NULL, covariate = NULL, proces
               process.output = process.output,
               model.output = model.output,
               report = output.output,
-              call = call)
+              call = call,
+              call.list = call.list)
 
   class(output) <- 'zoonWorkflow'
   
